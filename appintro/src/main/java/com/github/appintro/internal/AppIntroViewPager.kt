@@ -23,6 +23,12 @@ import kotlin.math.max
  */
 internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPager(context, attrs) {
 
+    enum class SwipeDirection {
+        NONE, LEFT, RIGHT, ALL
+    }
+
+    var swipeDirection: SwipeDirection = SwipeDirection.ALL;
+
     var isFullPagingEnabled = true
     var isPermissionSlide = false
     var lockPage = 0
@@ -37,6 +43,7 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
 
     private var currentTouchDownX: Float = 0.toFloat()
     private var currentTouchDownY: Float = 0.toFloat()
+    private var initialXValue: Float = 0f
     private var illegallyRequestedNextPageLastCalled: Long = 0
     private var customScroller: ScrollerCustomDuration? = null
     private var pageChangeListener: OnPageChangeListener? = null
@@ -121,8 +128,11 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
             return false
         }
 
-        // Calling super will allow the slider to "work" left and right.
-        return super.onInterceptTouchEvent(event)
+        if (this.isSwipeAllowed(event)) {
+            return super.onInterceptTouchEvent(event)
+        }
+
+        return false
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -130,8 +140,34 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
             return false
         }
 
-        // Calling super will allow the slider to "work" left and right.
-        return super.onTouchEvent(event)
+        if (this.isSwipeAllowed(event)) {
+            return super.onTouchEvent(event);
+        }
+
+        return false;
+    }
+
+    private fun isSwipeAllowed(event: MotionEvent): Boolean {
+        if (this.swipeDirection == SwipeDirection.ALL) {
+            return true
+        } else if (this.swipeDirection == SwipeDirection.NONE) {
+            return false;
+        }
+
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            initialXValue = event.x
+            return true
+        }
+
+        if (event.action == MotionEvent.ACTION_MOVE) {
+            val diffX: Float = event.x - initialXValue
+
+            return (diffX > 0 && this.swipeDirection == SwipeDirection.RIGHT)
+                    || (diffX < 0 && this.swipeDirection == SwipeDirection.LEFT);
+
+        }
+
+        return true;
     }
 
     /**
@@ -157,7 +193,8 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
                 if (event.action == MotionEvent.ACTION_UP) {
                     performClick()
                 }
-                val canRequestNextPage = onNextPageRequestedListener?.onCanRequestNextPage() ?: true
+                val canRequestNextPage = onNextPageRequestedListener?.onCanRequestNextPage()
+                        ?: true
 
                 // If user can't request the page, we shortcircuit the ACTION_MOVE logic here.
                 // We need to return false if we detect that the user swipes forward,
@@ -192,7 +229,7 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
      */
     private fun userIllegallyRequestNextPage(event: MotionEvent): Boolean {
         if (System.currentTimeMillis() - illegallyRequestedNextPageLastCalled >=
-            ON_ILLEGALLY_REQUESTED_NEXT_PAGE_MAX_INTERVAL
+                ON_ILLEGALLY_REQUESTED_NEXT_PAGE_MAX_INTERVAL
         ) {
             illegallyRequestedNextPageLastCalled = System.currentTimeMillis()
             return true

@@ -99,6 +99,14 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
      * */
     protected var isVibrate = false
 
+    enum class LockDirection {
+        BACKWARDS, FORWARDS
+    }
+
+    private data class Lock(val lockDirection : LockDirection, val hideButton : Boolean, val slideNumber : Int)
+
+    private val locks : ArrayList<Lock> = ArrayList()
+
     // Private Fields
 
     private lateinit var pagerAdapter: PagerAdapter
@@ -179,7 +187,25 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
             onIntroFinished()
         } else {
             pager.goToNextSlide()
-            onNextSlide()
+            onNextSlide(pager.currentItem)
+        }
+    }
+
+    /** Moves AppIntro to a specific slide */
+    protected fun goToSlide(slideNumber: Int) {
+        if (slideNumber < 0 || slideNumber >= fragments.size) {
+            error("Invalid Slide Number: $slideNumber")
+        } else {
+            pager.setCurrentItem(slideNumber, true)
+            onNextSlide(pager.currentItem)
+        }
+    }
+
+    protected fun addSlideLock(slideNumber: Int, lockDirection: LockDirection, hideButton: Boolean = false ) {
+        if (slideNumber < 0 || slideNumber >= fragments.size) {
+            error("Invalid Slide Number: $slideNumber")
+        } else {
+            locks.add(Lock(slideNumber = slideNumber, lockDirection = lockDirection, hideButton = hideButton))
         }
     }
 
@@ -359,15 +385,16 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
     /** Called when the user clicked the done button */
     protected open fun onDonePressed(currentFragment: Fragment?) {}
 
-    /** Called when the user clicked the next button */
-    protected open fun onNextPressed(currentFragment: Fragment?) {}
+    /** Called when the user clicked the next button, slideNumber is the slide that next was pressed on */
+    protected open fun onNextPressed(slideNumber: Int, currentFragment: Fragment?) {}
 
     /** Called when the user clicked the skip button */
-    protected open fun onSkipPressed(currentFragment: Fragment?) {}
+    protected open fun onSkipPressed(slideNumber: Int, currentFragment: Fragment?) {}
 
     /** Called when the user request to go to the next slide either
-     *  via keyboard (Enter, etc.) or via button */
-    protected open fun onNextSlide() {}
+     *  via keyboard (Enter, etc.) or via button. Slide number is the
+     *  slide that just became active*/
+    protected open fun onNextSlide(slideNumber: Int) {}
 
     /** Called when the AppIntro reached the end. */
     protected open fun onIntroFinished() {}
@@ -431,7 +458,7 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
         backButton.setOnClickListener { pager.goToPreviousSlide() }
         skipButton.setOnClickListener {
             dispatchVibration()
-            onSkipPressed(pagerAdapter.getItem(pager.currentItem))
+            onSkipPressed(pager.currentItem, pagerAdapter.getItem(pager.currentItem))
         }
 
         pager.adapter = this.pagerAdapter
@@ -749,8 +776,17 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
             if (isLastSlide) {
                 onDonePressed(currentFragment)
             } else {
-                onNextPressed(currentFragment)
+                onNextPressed(pager.currentItem, currentFragment)
             }
+
+            // Check if the current slide is locked, if so, do not
+            // progress the slides
+            for (lock in locks) {
+                if (lock.slideNumber == pager.currentItem) {
+                    return
+                }
+            }
+
             goToNextSlide(isLastSlide)
         }
     }
@@ -769,6 +805,7 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
             }
         }
 
+        // Called when a page comes into view
         override fun onPageSelected(position: Int) {
             if (slidesNumber >= 1) {
                 indicatorController?.selectPosition(position)
@@ -782,7 +819,27 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
                     pager.isNextPagingEnabled = true
                 }
             }
+
             updateButtonsVisibility()
+
+            /*
+             * Update pager locks
+             */
+            pager.swipeDirection = AppIntroViewPager.SwipeDirection.ALL
+
+            for (lock : Lock in locks) {
+                if (position == lock.slideNumber) {
+                    // Apply the swiping locks
+                    if (lock.lockDirection == LockDirection.FORWARDS) {
+                        pager.swipeDirection = AppIntroViewPager.SwipeDirection.RIGHT
+                        nextButton.isVisible = !lock.hideButton
+                    }
+                    else if (lock.lockDirection == LockDirection.BACKWARDS) {
+                        pager.swipeDirection = AppIntroViewPager.SwipeDirection.LEFT
+                        backButton.isVisible = !lock.hideButton
+                    }
+                }
+            }
 
             pager.isPermissionSlide = this@AppIntroBase.isPermissionSlide
 
