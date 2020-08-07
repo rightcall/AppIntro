@@ -782,7 +782,7 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
             // Check if the current slide is locked, if so, do not
             // progress the slides
             for (lock in locks) {
-                if (lock.slideNumber == pager.currentItem) {
+                if (lock.slideNumber == pager.currentItem && lock.lockDirection == LockDirection.FORWARDS) {
                     return
                 }
             }
