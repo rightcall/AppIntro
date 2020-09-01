@@ -779,6 +779,8 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
                 onNextPressed(pager.currentItem, currentFragment)
             }
 
+            println("Attempting to move to new page.");
+
             // Check if the current slide is locked, if so, do not
             // progress the slides
             for (lock in locks) {

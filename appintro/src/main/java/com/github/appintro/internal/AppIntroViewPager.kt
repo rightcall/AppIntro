@@ -124,11 +124,7 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
     override fun performClick() = super.performClick()
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
-        if (!handleTouchEvent(event)) {
-            return false
-        }
-
-        if (this.isSwipeAllowed(event)) {
+        if (handleTouchEvent(event)) {
             return super.onInterceptTouchEvent(event)
         }
 
@@ -136,38 +132,11 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (!handleTouchEvent(event)) {
-            return false
-        }
-
-        if (this.isSwipeAllowed(event)) {
-            return super.onTouchEvent(event);
+        if (handleTouchEvent(event)) {
+            return super.onTouchEvent(event)
         }
 
         return false;
-    }
-
-    private fun isSwipeAllowed(event: MotionEvent): Boolean {
-        if (this.swipeDirection == SwipeDirection.ALL) {
-            return true
-        } else if (this.swipeDirection == SwipeDirection.NONE) {
-            return false;
-        }
-
-        if (event.action == MotionEvent.ACTION_DOWN) {
-            initialXValue = event.x
-            return true
-        }
-
-        if (event.action == MotionEvent.ACTION_MOVE) {
-            val diffX: Float = event.x - initialXValue
-
-            return (diffX > 0 && this.swipeDirection == SwipeDirection.RIGHT)
-                    || (diffX < 0 && this.swipeDirection == SwipeDirection.LEFT);
-
-        }
-
-        return true;
     }
 
     /**
@@ -210,6 +179,12 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
                 // If the slide contains permissions, check for forward swipe.
                 if (isPermissionSlide && isSwipeForward(currentTouchDownX, event.x)) {
                     onNextPageRequestedListener?.onUserRequestedPermissionsDialog()
+                }
+
+                if(isSwipeForward(currentTouchDownX, event.x) && swipeDirection == SwipeDirection.RIGHT) {
+                    return false
+                } else if(!isSwipeForward(currentTouchDownX, event.x) && swipeDirection == SwipeDirection.LEFT) {
+                    return false
                 }
             }
         }
