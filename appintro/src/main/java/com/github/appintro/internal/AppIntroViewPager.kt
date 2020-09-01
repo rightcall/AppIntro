@@ -124,17 +124,17 @@ internal class AppIntroViewPager(context: Context, attrs: AttributeSet) : ViewPa
     override fun performClick() = super.performClick()
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
-        if (handleTouchEvent(event)) {
-            return super.onInterceptTouchEvent(event)
-        }
+//        if (handleTouchEvent(event)) {
+//            return super.onInterceptTouchEvent(event)
+//        }
 
         return false
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (handleTouchEvent(event)) {
-            return super.onTouchEvent(event)
-        }
+//        if (handleTouchEvent(event)) {
+//            return super.onTouchEvent(event)
+//        }
 
         return false;
     }

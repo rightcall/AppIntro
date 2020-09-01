@@ -192,12 +192,12 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
     }
 
     /** Moves AppIntro to a specific slide */
-    protected fun goToSlide(slideNumber: Int) {
+    protected fun goToSlide(slideNumber: Int, smoothScroll: Boolean = true) {
         if (slideNumber < 0 || slideNumber >= fragments.size) {
             error("Invalid Slide Number: $slideNumber")
         } else {
-            pager.setCurrentItem(slideNumber, true)
-            onNextSlide(pager.currentItem)
+            pager.setCurrentItem(slideNumber, smoothScroll)
+            onNextSlide(slideNumber)
         }
     }
 
@@ -773,13 +773,8 @@ abstract class AppIntroBase : AppCompatActivity(), AppIntroViewPagerListener {
 
             // We can successfully change slide, let's do it.
             val currentFragment = pagerAdapter.getItem(pager.currentItem)
-            if (isLastSlide) {
-                onDonePressed(currentFragment)
-            } else {
-                onNextPressed(pager.currentItem, currentFragment)
-            }
 
-            println("Attempting to move to new page.");
+            onNextPressed(pager.currentItem, currentFragment)
 
             // Check if the current slide is locked, if so, do not
             // progress the slides
