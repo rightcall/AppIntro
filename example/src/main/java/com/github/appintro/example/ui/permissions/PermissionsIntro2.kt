@@ -41,8 +41,8 @@ class PermissionsIntro2 : AppIntro2() {
                 3, false)
     }
 
-    public override fun onSkipPressed(currentFragment: Fragment?) {
-        super.onSkipPressed(currentFragment)
+    public override fun onSkipPressed(slideNumber: Int, currentFragment: Fragment?) {
+        super.onSkipPressed(slideNumber, currentFragment)
         finish()
     }
 

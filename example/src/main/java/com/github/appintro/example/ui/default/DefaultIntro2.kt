@@ -56,8 +56,8 @@ class DefaultIntro2 : AppIntro2() {
         setTransformer(AppIntroPageTransformerType.Parallax())
     }
 
-    public override fun onSkipPressed(currentFragment: Fragment?) {
-        super.onSkipPressed(currentFragment)
+    public override fun onSkipPressed(slideNumber: Int, currentFragment: Fragment?) {
+        super.onSkipPressed(slideNumber, currentFragment)
         finish()
     }
 
